@@ -1,0 +1,13 @@
+---
+
+osc_container_data_dir: "/mnt/data"
+
+osc_owncloud_image_tag: "latest"
+
+osc_owncloud_default_usergroup: "users"
+osc_owncloud_apps_enable: ""
+osc_owncloud_apps_disable: "firstrunwizard,systemtags,comments,updatenotification"
+osc_owncloud_apps_install: ""
+osc_owncloud_apps_uninstall: "firstrunwizard,systemtags,comments,updatenotification"
+
+osc_owncloud_skeleton_dir: "/var/www/owncloud/core/skeleton"

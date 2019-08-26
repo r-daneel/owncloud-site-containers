@@ -1,0 +1,28 @@
+---
+
+- name: Show users
+  debug:
+    var: user
+    verbosity: "1"
+  loop: "{{ site.users }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.name }}"
+
+- name: Setup owncloud users
+  command: >
+   docker exec --env OC_PASS={{ user.password }} {{ site.name }}
+     occ user:add --password-from-env
+                  --no-interaction
+                  --group '{{ user.group | default(osc_owncloud_default_usergroup) }}'
+                  --email '{{ user.email | default('') }}'
+                  --display-name '{{ user.display_name | default(user.name) }}'
+                  -- {{ user.name }}
+  failed_when: occ_cmd.rc !=0 and occ_cmd.stdout != 'The user "{{ user.name }}" already exists.'
+  changed_when: occ_cmd.stdout != 'The user "{{ user.name }}" already exists.'
+  register: occ_cmd
+  loop: "{{ site.users }}"
+  loop_control:
+    loop_var: user
+    label: "{{ user.name }}"
+
