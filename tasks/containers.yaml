@@ -1,0 +1,21 @@
+---
+
+- name: "{{ site.name }} | Start owncloud container"
+  docker_container:
+    name: "{{ site.name }}"
+    image: "{{ osc_owncloud_image_name }}:{{ osc_owncloud_image_tag }}"
+    volumes:
+      - "{{ site.data_dir }}:{{ osc_container_data_dir }}:rw"
+    env:
+      OWNCLOUD_ADMIN_USERNAME: "{{ site.admin_user }}"
+      OWNCLOUD_ADMIN_PASSWORD: "{{ site.admin_pass }}"
+      OWNCLOUD_APPS_INSTALL:   "{{ site.owncloud_apps_install | default(osc_owncloud_apps_install) }}"
+      OWNCLOUD_APPS_ENABLE:    "{{ site.owncloud_apps_enable | default(osc_owncloud_apps_enable) }}"
+      OWNCLOUD_APPS_DISABLE:   "{{ site.owncloud_apps_disable | default(osc_owncloud_apps_disable) }}"
+      OWNCLOUD_APPS_UNINSTALL: "{{ site.owncloud_apps_uninstall | default(osc_owncloud_apps_uninstall) }}"
+    state: "started"
+
+- name: "{{ site.name }} | Cleanup skeleton"
+  command: >
+   docker exec {{ site.name }} find {{ osc_owncloud_skeleton_dir }} -type f -delete
+  changed_when: false

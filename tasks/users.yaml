@@ -1,6 +1,6 @@
 ---
 
-- name: Show users
+- name: "{{ site.name }} | Show users"
   debug:
     var: user
     verbosity: "1"
@@ -9,7 +9,15 @@
     loop_var: user
     label: "{{ user.name }}"
 
-- name: Setup owncloud users
+- name: "{{ site.name }} | Wait for site to be up"
+  action: uri url=https://{{ site.name }}.{{ my_domain }}
+  delegate_to: localhost
+  register: result
+  until: result.status == 200
+  retries: 12
+  delay: 5
+
+- name: "{{ site.name }} | Setup owncloud users"
   command: >
    docker exec --env OC_PASS={{ user.password }} {{ site.name }}
      occ user:add --password-from-env
