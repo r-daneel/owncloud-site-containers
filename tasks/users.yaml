@@ -10,7 +10,7 @@
     label: "{{ user.name }}"
 
 - name: "{{ site.name }} | Wait for site to be up"
-  action: uri url=https://{{ site.name }}.{{ my_domain }}
+  action: uri url=https://{{ site.name }}.{{ osc_domain_name }}
   delegate_to: localhost
   register: result
   until: result.status == 200

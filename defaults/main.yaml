@@ -1,5 +1,7 @@
 ---
 
+osc_domain_name: "local"
+
 osc_container_data_dir: "/mnt/data"
 
 osc_owncloud_image_tag: "latest"
