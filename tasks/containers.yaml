@@ -17,5 +17,14 @@
 
 - name: "{{ site.name }} | Cleanup skeleton"
   command: >
-   docker exec {{ site.name }} find {{ osc_owncloud_skeleton_dir }} -type f -delete
+    docker exec {{ site.name }} find {{ osc_owncloud_skeleton_dir }} -type f -delete
   changed_when: false
+
+- name: "setup owncloud app configurations (if any)"
+  command: >
+    docker exec {{ site.name }} occ config:app:set --value {{ oc_app.value}} {{ oc_app.name }} {{ oc_app.parameter }}
+  changed_when: false
+  loop: "{{ site.owncloud_app_parameters | default([]) }}"
+  loop_control:
+    loop_var: oc_app
+    label: "{{ oc_app.name }}:{{ oc_app.parameter }}={{oc_app.value}}"
