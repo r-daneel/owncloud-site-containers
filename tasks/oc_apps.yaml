@@ -1,0 +1,9 @@
+---
+
+- name: "setup configuration for owncloud app '{{ oc_app.name }}'"
+  command: docker exec {{ site.name }} occ config:app:set --value {{ oc_app_parameter.value}} {{ oc_app.name }} {{ oc_app_parameter.name }}
+  changed_when: false
+  loop: "{{ oc_app.parameters | default([]) }}"
+  loop_control:
+    loop_var: oc_app_parameter
+    label: "{{ oc_app_parameter.name }}: {{ oc_app_parameter.value }}"

@@ -1,0 +1,64 @@
+---
+
+- name: "{{ site.name }} | Create root data directory"
+  file:
+    path: "{{ site.data_dir | dirname }}"
+    state: "directory"
+    owner: "root"
+    group: "root"
+    mode: "0755"
+
+- name: "{{ site.name }} | Create container data directory"
+  file:
+    path: "{{ site.data_dir }}"
+    state: "directory"
+    owner: "www-data"
+    group: "root"
+    mode: "0755"
+
+- name: "{{ site.name }} | Start owncloud container"
+  docker_container:
+    name: "{{ site.name }}"
+    image: "{{ osc_owncloud_image_name }}:{{ osc_owncloud_image_tag }}"
+    volumes:
+      - "{{ site.data_dir }}:{{ osc_container_data_dir }}:rw"
+    env:
+      OWNCLOUD_ADMIN_USERNAME: "{{ site.admin_user }}"
+      OWNCLOUD_ADMIN_PASSWORD: "{{ site.admin_pass }}"
+      OWNCLOUD_APPS_INSTALL:   "{{ osc_oc_installed_apps | default(osc_owncloud_installed_apps) }}"
+      OWNCLOUD_APPS_ENABLE:    "{{ osc_oc_enabled_apps | default(osc_owncloud_enabled_apps) }}"
+      OWNCLOUD_APPS_DISABLE:   "{{ osc_oc_disabled_apps | default(osc_owncloud_disabled_apps) }}"
+      OWNCLOUD_APPS_UNINSTALL: "{{ osc_oc_uninstalled_apps | default(osc_owncloud_uninstalled_apps) }}"
+    state: "started"
+  vars:
+    osc_oc_installed_apps: "{{ site.owncloud_apps | json_query('[?installed].name') | join(',') }}"
+    osc_oc_enabled_apps: "{{ site.owncloud_apps | json_query('[?enabled && installed].name') | join(',') }}"
+    osc_oc_disabled_apps: "{{ site.owncloud_apps | json_query('[?!enabled && installed].name') | join(',') }}"
+    osc_oc_uninstalled_apps: "{{ site.owncloud_apps | json_query('[?!installed].name') | join(',') }}"
+
+- name: "{{ site.name }} | Cleanup skeleton"
+  command: >
+    docker exec {{ site.name }} find {{ osc_owncloud_skeleton_dir }} -type f -delete
+  changed_when: false
+
+- name: "{{ site.name }} | Wait for site to be up"
+  action: uri url=https://{{ site.name }}.{{ osc_domain_name }}
+  delegate_to: localhost
+  register: result
+  until: result.status == 200
+  retries: 12
+  delay: 5
+
+- name: "{{ site.name }} | Process owncloud app parameters"
+  include_tasks: oc_apps.yaml
+  loop: "{{ site.owncloud_apps | default([]) }}"
+  loop_control:
+    loop_var: oc_app
+    label: "{{ oc_app.name }}"
+
+- name: "{{ site.name }} | Process owncloud users"
+  include_tasks: oc_users.yaml
+  loop: "{{ site.users | default([]) }}"
+  loop_control:
+    loop_var: oc_user
+    label: "{{ oc_user.name }}"

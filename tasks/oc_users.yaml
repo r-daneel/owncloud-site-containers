@@ -1,0 +1,14 @@
+---
+
+- name: "{{ oc_user.name }} | Setup owncloud user"
+  command: >
+   docker exec --env OC_PASS={{ oc_user.password }} {{ site.name }}
+     occ user:add --password-from-env
+                  --no-interaction
+                  --group '{{ oc_user.group | default(osc_owncloud_default_usergroup) }}'
+                  --email '{{ oc_user.email | default('') }}'
+                  --display-name '{{ oc_user.display_name | default(user.name) }}'
+                  -- {{ oc_user.name }}
+  failed_when: occ_cmd.rc !=0 and occ_cmd.stdout != 'The user "{{ oc_user.name }}" already exists.'
+  changed_when: occ_cmd.stdout != 'The user "{{ oc_user.name }}" already exists.'
+  register: occ_cmd

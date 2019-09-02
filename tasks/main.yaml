@@ -1,21 +1,7 @@
 ---
 
-- name: Process data directories
-  include_tasks: data_directories.yaml
-  loop: "{{ osc_sites }}"
-  loop_control:
-    loop_var: site
-    label: "{{ site.name }}"
-
-- name: Process containers
-  include_tasks: containers.yaml
-  loop: "{{ osc_sites }}"
-  loop_control:
-    loop_var: site
-    label: "{{ site.name }}"
-
-- name: Process users
-  include_tasks: users.yaml
+- name: Process sites
+  include_tasks: oc_site.yaml
   loop: "{{ osc_sites }}"
   loop_control:
     loop_var: site
