@@ -51,6 +51,7 @@
 
 - name: "{{ site.name }} | Process owncloud app parameters"
   include_tasks: oc_apps.yaml
+  when: oc_app.installed and oc_app.parameters != []
   loop: "{{ site.owncloud_apps | default([]) }}"
   loop_control:
     loop_var: oc_app
