@@ -9,6 +9,6 @@
                   --email '{{ oc_user.email | default('') }}'
                   --display-name '{{ oc_user.display_name | default(user.name) }}'
                   -- {{ oc_user.name }}
-  failed_when: occ_cmd.rc !=0 and occ_cmd.stdout != 'The user "{{ oc_user.name }}" already exists.'
-  changed_when: occ_cmd.stdout != 'The user "{{ oc_user.name }}" already exists.'
+  failed_when: occ_cmd.rc !=0 and occ_cmd.stdout != 'The user "' + oc_user.name + '" already exists.'
+  changed_when: occ_cmd.stdout != 'The user "' + oc_user.name + '" already exists.'
   register: occ_cmd
