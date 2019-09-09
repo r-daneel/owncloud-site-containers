@@ -13,3 +13,7 @@ osc_owncloud_installed_apps: ""
 osc_owncloud_uninstalled_apps: "firstrunwizard,systemtags,comments,updatenotification"
 
 osc_owncloud_skeleton_dir: "/var/www/owncloud/core/skeleton"
+
+# container restart policy:
+# always start/restart he container unless we told docker to stop it on purpose
+osc_container_restart_policy: "unless-stopped"
