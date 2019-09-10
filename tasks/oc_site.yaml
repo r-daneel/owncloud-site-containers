@@ -29,6 +29,8 @@
       OWNCLOUD_APPS_ENABLE:    "{{ osc_oc_enabled_apps | default(osc_owncloud_enabled_apps) }}"
       OWNCLOUD_APPS_DISABLE:   "{{ osc_oc_disabled_apps | default(osc_owncloud_disabled_apps) }}"
       OWNCLOUD_APPS_UNINSTALL: "{{ osc_oc_uninstalled_apps | default(osc_owncloud_uninstalled_apps) }}"
+    labels:
+      traefik.enable: "true"
     state: "started"
     restart_policy: "{{ osc_container_restart_policy }}"
   vars:
