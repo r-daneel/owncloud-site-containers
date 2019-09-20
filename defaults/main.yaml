@@ -5,6 +5,7 @@ osc_domain_name: "local"
 osc_container_data_dir: "/mnt/data"
 
 osc_owncloud_image_tag: "latest"
+osc_mysql_image_tag: "latest"
 
 osc_owncloud_default_usergroup: "users"
 osc_owncloud_enabled_apps: ""

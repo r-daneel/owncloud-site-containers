@@ -1,3 +1,4 @@
 ---
 
 osc_owncloud_image_name: "owncloud/server"
+osc_mysql_image_name: "mariadb"

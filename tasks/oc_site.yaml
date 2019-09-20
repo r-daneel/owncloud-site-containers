@@ -1,20 +1,70 @@
 ---
 
+- name: "{{ site.name }} | Set site specific variables"
+  set_fact:
+    db_type: ""
+    db_name: ""
+    db_host: ""
+    db_datadir: ""
+    db_username: ""
+    db_password: ""
+    db_root_password: ""
+    db_link: []
+
+- name: "{{ site.name }} | Set database specific variables"
+  set_fact:
+    db_type: "{{ site.database.db_type }}"
+    db_name: "{{ site.name | regex_replace('\\.','_') }}"
+    db_host: "{{ site.name }}_db"
+    db_datadir: "{{ site.data_dir }}_db"
+    db_username: "{{ site.database.db_username }}"
+    db_password: "{{ site.database.db_password }}"
+    db_root_password: "{{ site.database.db_root_password | default(site.database.db_password) }}"
+    db_link:
+      - "{{ site.name }}_db:{{ site.name }}_db"
+  when: site.database is defined and site.database.db_type is defined and site.database.db_type == "mysql"
+
 - name: "{{ site.name }} | Create root data directory"
   file:
     path: "{{ site.data_dir | dirname }}"
     state: "directory"
     owner: "root"
     group: "root"
-    mode: "0755"
+    mode: "0750"
 
 - name: "{{ site.name }} | Create container data directory"
   file:
     path: "{{ site.data_dir }}"
     state: "directory"
-    owner: "www-data"
-    group: "root"
     mode: "0755"
+
+- name: "{{ site.name }} | Create container database directory"
+  file:
+    path: "{{ db_datadir }}"
+    state: "directory"
+    mode: "0755"
+  when: db_name is defined and db_name != ''
+
+- name: "{{ site.name }} | Start database"
+  docker_container:
+    name: "{{ db_host }}"
+    image: "{{ osc_mysql_image_name }}:{{ osc_mysql_image_tag }}"
+    volumes:
+      - "{{ db_datadir }}:/var/lib/mysql:rw"
+    env:
+      MYSQL_ROOT_PASSWORD: "{{ db_root_password }}"
+      MYSQL_USER: "{{ db_username }}"
+      MYSQL_PASSWORD: "{{ db_password }}"
+      MYSQL_DATABASE: "{{ db_name }}"
+    state: "started"
+    restart_policy: "{{ osc_container_restart_policy }}"
+  when: db_name is defined and db_name != ''
+  register: new_db
+
+- name: "{{ site.name }} | Wait for database"
+  pause:
+    minutes: "3"
+  when: new_db is changed
 
 - name: "{{ site.name }} | Start owncloud container"
   docker_container:
@@ -22,7 +72,15 @@
     image: "{{ osc_owncloud_image_name }}:{{ osc_owncloud_image_tag }}"
     volumes:
       - "{{ site.data_dir }}:{{ osc_container_data_dir }}:rw"
+    links:
+      "{{ db_link }}"
     env:
+      OWNCLOUD_DB_TYPE: "{{ db_type | default('sqlite') }}"
+      OWNCLOUD_DB_NAME: "{{ db_name }}"
+      OWNCLOUD_DB_USERNAME: "{{ db_username | default('') }}"
+      OWNCLOUD_DB_PASSWORD: "{{ db_password | default('') }}"
+      OWNCLOUD_DB_HOST: "{{ db_host | default('') }}"
+      OWNCLOUD_DB_PREFIX: "{{ db_prefix | default('oc_') }}"
       OWNCLOUD_ADMIN_USERNAME: "{{ site.admin_user }}"
       OWNCLOUD_ADMIN_PASSWORD: "{{ site.admin_pass }}"
       OWNCLOUD_APPS_INSTALL:   "{{ osc_oc_installed_apps | default(osc_owncloud_installed_apps) }}"
@@ -49,12 +107,12 @@
   delegate_to: localhost
   register: result
   until: result.status == 200
-  retries: 12
+  retries: 72
   delay: 5
 
 - name: "{{ site.name }} | Process owncloud app parameters"
   include_tasks: oc_apps.yaml
-  when: oc_app.installed and oc_app.parameters != []
+  when: oc_app.installed and oc_app.parameters is defined and oc_app.parameters != []
   loop: "{{ site.owncloud_apps | default([]) }}"
   loop_control:
     loop_var: oc_app
